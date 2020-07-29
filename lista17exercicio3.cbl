@@ -42,20 +42,23 @@
        77 ws-fs-arqTemperatura                     pic  9(02).
 
        01 ws-temperaturas occurs 30.
-          05 ws-temp                               pic s9(02)v99.
+          05 ws-temp                               pic s9(02)v99 value 0.
 
        77 ws-media-temp                            pic s9(04)v99.
-       77 ws-temp-total                            pic s9(03)v99.
+
+       77 ws-temp-total                            pic s9(04)v99.
 
        77 ws-dia                                   pic  9(02).
        77 ws-ind-temp                              pic  9(02).
 
        77 ws-sair                                  pic  x(01).
+
+      *>  mensagens de erro
        01 ws-msn-erro.
            05 ws-msn-erro-offset                   pic  x(04).
            05 filler                               pic  x(01) value '-'.
            05 ws-msn-erro-cod                      pic  x(1).
-           05 filler                               pic  x(02) value '-'.
+           05 filler                               pic  x(02) value space.
            05 ws-msn-erro-text                     pic  x(42).
 
       *>---variáveis para comunicação entre programas---
@@ -80,7 +83,9 @@
       *>--------------------------------------------------------------------<*
        inicializa section.
 
+      *>   open input abre o arquivo para leitura
            open input arqTemperatura.
+      *>   tratamento de erro
            if ws-fs-arqTemperatura <> 0 then
                move 1 to ws-msn-erro-offset
                move ws-fs-arqTemperatura to ws-msn-erro-cod
@@ -91,9 +96,9 @@
            perform varying ws-ind-temp from 1 by 1 until ws-fs-arqTemperatura = 10
                                                                or ws-ind-temp > 30
 
-      *>   inicializando a variável da temperatura
-           read arqTemperatura into ws-temperaturas(ws-ind-temp)
-
+      *>       lê o arquivo de temperatura
+               read arqTemperatura into ws-temperaturas(ws-ind-temp)
+      *>       tratamento de erro
                if ws-fs-arqTemperatura <> 0
                and ws-fs-arqTemperatura <> 10  then
                    move 2 to ws-msn-erro-offset
@@ -104,7 +109,9 @@
 
            end-perform
 
+      *>   fechar arquivo
            close arqTemperatura.
+      *>   tratamento de erro
            if ws-fs-arqTemperatura <> 0 then
                move 3 to ws-msn-erro-offset
                move ws-fs-arqTemperatura to ws-msn-erro-cod
@@ -119,14 +126,16 @@
       *>  processamento principal
       *>------------------------------------------------------------------------
        processamento section.
-      *>   chamando rotina de calculo da média de temp.
+
+      *>   chamando rotina de calculo da média de temperatura
            perform calc-media-temp
 
-      *>    menu do sistema
+      *>   menu do sistema
            perform until ws-sair = "S"
                       or ws-sair = "s"
                display erase
 
+      *>       informar o dia
                display "Dia a ser testado: "
                accept ws-dia
 
@@ -142,12 +151,16 @@
                    end-if
                    end-if
                else
-                   display "Dia fora do intervalo valido (1 -30)"
+      *>           se informar um dia menos que 1 e maior que 30
+                   display "Dia fora do intervalo valido (1-30)"
                end-if
 
+      *>       condição de saída
                display "'T'estar outra temperatura"
                display "'S'air"
                accept ws-sair
+               move function upper-case(ws-sair) to ws-sair
+
            end-perform
            .
        processamento-exit.
@@ -158,12 +171,18 @@
       *>------------------------------------------------------------------------
        calc-media-temp section.
 
+      *>   inicializando variável
            move 0 to ws-temp-total
+
            perform varying ws-ind-temp from 1 by 1 until ws-ind-temp > 30
+
+      *>       somando todas as temperaturas
                compute ws-temp-total = ws-temp-total + ws-temp(ws-ind-temp)
+
            end-perform
 
-           compute ws-media-temp = ws-temp-total/30
+      *>   calculo da média da temperatura
+           compute ws-media-temp = ws-temp-total / 30
 
            .
        calc-media-temp-exit.
