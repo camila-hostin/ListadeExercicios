@@ -42,11 +42,11 @@
            05 fd-pai                               pic  x(25).
            05 fd-telefone                          pic  x(15).
            05 fd-notas.
-               10 fd-nota1                         pic  x(04).
-               10 fd-nota2                         pic  x(04).
-               10 fd-nota3                         pic  x(04).
-               10 fd-nota4                         pic  x(04).
-               10 fd-media                         pic  x(04).
+               10 fd-nota1                         pic  9(02)v99 value 0.
+               10 fd-nota2                         pic  9(02)v99 value 0.
+               10 fd-nota3                         pic  9(02)v99 value 0.
+               10 fd-nota4                         pic  9(02)v99 value 0.
+               10 fd-media                         pic  9(02)v99 value 0.
 
       *>----variaveis de trabalho
        working-storage section.
@@ -67,21 +67,30 @@
            05 ws-nome-pai                          pic x(15).
            05 filler                               pic x(03)
                                                  value ' | '.
-           05 ws-tel-pais                           pic x(15).
+           05 ws-tel-pais                          pic x(15).
            05 filler                               pic x(03)
                                                  value ' | '.
       *>  variáveis nota
-       01 ws-notas.
-           05 filler                               pic x(3) value ' | '.
-           05 ws-nota1                             pic 9(2)v99 value 0.
-           05 filler                               pic x(3) value ' | '.
-           05 ws-nota2                             pic 9(2)v99 value 0.
-           05 filler                               pic x(3) value ' | '.
-           05 ws-nota3                             pic 9(2)v99 value 0.
-           05 filler                               pic x(3) value ' | '.
-           05 ws-nota4                             pic 9(2)v99 value 0.
-           05 filler                               pic x(3) value ' | '.
-           05 ws-media                             pic  9(02)v99.
+           05 ws-notas.
+               10 filler                           pic x(3)
+                                                value ' | '.
+               10 ws-nota1                         pic 9(2)v99
+                                                    value 0.
+               10 filler                           pic x(3)
+                                                value ' | '.
+               10 ws-nota2                         pic 9(2)v99
+                                                    value 0.
+               10 filler                           pic x(3)
+                                                value ' | '.
+               10 ws-nota3                         pic 9(2)v99
+                                                    value 0.
+               10 filler                           pic x(3)
+                                                value ' | '.
+               10 ws-nota4                         pic 9(2)v99
+                                                    value 0.
+               10 filler                           pic x(3)
+                                                value ' | '.
+               10 ws-media                         pic  9(02)v99.
 
        77 ws-ind                                   pic  9(03).
        77 ws-menu                                  pic  x(02).
@@ -133,6 +142,7 @@
 
        *>  open i-o abre o arquivo para leitura e escrita
            open i-o arqCadastroAlunos
+      *>       tratamento de erro
                if ws-fs-arqCadastroAlunos  <> 00
                and ws-fs-arqCadastroAlunos <> 05 then
       *>           mensagem de erro
@@ -155,6 +165,7 @@
 
            perform until ws-menu <> 'S'
 
+      *>       menu de consulta
                display 'Digite:'
                display 'A - Cadastro de Alunos'
                display 'B - Cadastro de Notas'
@@ -162,7 +173,6 @@
                display 'D - Consulta Cadastro Sequencial'
                display 'E - Deletar Cadastro'
                display 'F - Alterar Cadastro'
-
                accept ws-opcao
                move function upper-case (ws-opcao) to ws-opcao
 
@@ -184,6 +194,7 @@
                        display 'Opcao Invalida'
                end-evaluate
 
+      *>       condição de saída
                display 'Quer continuar? S/N'
                accept ws-menu
                move function upper-case(ws-menu) to ws-menu
@@ -202,15 +213,15 @@
 
            perform until ws-menu <> 'S'
 
-      *>       cadastro do nome do aluno
                display '---------- Cadastro de Alunos ----------'
 
+      *>       cadastro do nome do aluno
                display 'Informe o Codigo do Aluno: '
                accept ws-ind
                display 'Informe o Nome do Aluno: '
                accept ws-nome-aluno
       *>       cadastro endereço
-               display 'Informe o Endereço: '
+               display 'Informe o Endereco: '
                accept ws-endereco-aluno
       *>       cadastro informações dos pais
                display 'Informe o Nome do Pai: '
@@ -221,12 +232,12 @@
                accept ws-tel-pais
 
       *> -------------  salvar dados no arquivo
-
+      *>       escreve os dados no arquivo
                write fd-alunos from ws-alunos
 
-               read arqCadastroAlunos
-
-               if ws-fs-arqCadastroAlunos <> 0 then
+      *>       tratamento de erro
+               if ws-fs-arqCadastroAlunos <> 0
+               and ws-fs-arqCadastroAlunos <> 23 then
                    move 2 to ws-msn-erro-ofsset
                    move ws-fs-arqCadastroAlunos to ws-msn-erro-cod
                    move 'Erro ao escrever arq. arqCadastroAlunos' to ws-msn-erro-text
@@ -235,8 +246,12 @@
 
       *> -------------
 
+               display '  '
+      *>       condição de saída
                display 'Continuar Cadastrando? S/N'
                accept ws-menu
+               move function upper-case(ws-menu) to ws-menu
+
            end-perform
 
            .
@@ -280,10 +295,9 @@
 
                move ws-notas to fd-notas
 
-               rewrite fd-alunos
 
                if ws-fs-arqCadastroAlunos <> 0 then
-                   if ws-fs-arqCadastroAlunos   = 23 then
+                   if ws-fs-arqCadastroAlunos = 23 then
                        display 'Dado Inválido'
                    else
                        move 3 to ws-msn-erro-ofsset
@@ -301,22 +315,27 @@
                    end-if
                end-if
 
+               rewrite fd-alunos
+
       *> -------------
 
                display 'Continuar Cadastrando? S/N'
                accept ws-menu
+               move function upper-case(ws-menu) to ws-menu
+
            end-perform
            .
        cadastro-notas-exit.
            exit.
       *>------------------------------------------------------------------------
-      *>  consultar cadastro
+      *>  consultar cadastro - indexada
       *>------------------------------------------------------------------------
        consulta-cadastro-indexada section.
 
            perform until ws-menu <> 'S'
 
                display '---------- Consultar Cadastro ----------'
+
                display 'Informe o Codigo do Aluno: '
                accept ws-ind
 
@@ -353,8 +372,9 @@
                display 'Nota 4 ' ws-nota4
                display 'Media ' ws-media
 
-               display 'Continuar Consultando Cadastro? S/N'
+               display 'Deseja Continuar Consultando? S/N'
                accept ws-menu
+               move function upper-case(ws-menu) to ws-menu
 
            end-perform
 
@@ -362,10 +382,12 @@
        consulta-cadastro-indexada-exit.
            exit.
       *>------------------------------------------------------------------------
-      *>  consultar cadastro - next
+      *>  consultar cadastro - de forma sequencial - next
       *>------------------------------------------------------------------------
-
        consulta-cadastro-seq section.
+
+      *>   para saber o ponto de início
+           perform consulta-cadastro-indexada
 
            perform until ws-menu <> 'S'
 
@@ -375,8 +397,10 @@
 
       *> -------------  ler dados no arquivo de forma sequencial - next
 
-           read arqCadastroAlunos next
+      *>   ler arquivo de forma sequencial
+           read arqCadastroAlunos next into ws-alunos
 
+      *>   tratamento de erro
            if ws-fs-arqCadastroAlunos <> 0 then
                if ws-fs-arqCadastroAlunos = 10 then
                    perform consulta-cadastro-seq
@@ -399,9 +423,11 @@
                display 'Nota 2' ws-nota2
                display 'Nota 3' ws-nota3
                display 'Nota 4' ws-nota4
+               display 'Media ' ws-media
 
-               display 'Continuar Consultando Cadastro? S/N'
+               display 'Deseja Continuar Consultando? S/N'
                accept ws-menu
+               move function upper-case(ws-menu) to ws-menu
 
            end-perform
 
@@ -447,9 +473,12 @@
                display 'Nota 2' ws-nota2
                display 'Nota 3' ws-nota3
                display 'Nota 4' ws-nota4
+               display 'Media ' ws-media
 
-               display 'Continuar Consultando Cadastro? S/N'
+               display 'Deseja Continuar Consultando? S/N'
                accept ws-menu
+               move function upper-case(ws-menu) to ws-menu
+
            end-perform
            .
        consulta-cadastro-seq-exit.
@@ -459,9 +488,12 @@
       *>  deletar cadastro
       *>------------------------------------------------------------------------
        deletar-aluno section.
-           perform until ws-menu <> 'S'
 
-      *>       apagar dados do registro
+           display erase
+
+           perform consulta-cadastro-indexada
+
+           perform until ws-menu <> 'S'
 
                display 'Informe o Codigo do Aluno a Ser Excluído: '
                accept ws-ind
@@ -470,6 +502,7 @@
 
       *> -------------  deletar dados no arquivo de forma sequencial
 
+      *>       deletar arquivo
                delete arqCadastroAlunos
 
                if ws-fs-arqCadastroAlunos = 0 then
@@ -487,9 +520,11 @@
 
       *> -------------
 
-
+      *>       condição de saída
                display 'Deseja Deletar Mais Algum Cadastro? S/N'
                accept ws-menu
+               move function upper-case(ws-menu) to ws-menu
+
            end-perform
 
            .
@@ -501,17 +536,35 @@
       *>------------------------------------------------------------------------
        alterar-aluno section.
 
+           display erase
+
+           perform consulta-cadastro-indexada
+
            perform until ws-menu <> 'S'
 
-      *>       alterar dados do registro
-
-               display 'Informe o Codigo do Aluno a Ser Excluído: '
+      *>       informar o código do aluno
+               display 'Informe o Codigo do Aluno a Ser Alterado: '
                accept ws-ind
+
+               display 'Altere o Cadastro'
+
+               display 'Nome do Aluno: '
+               accept ws-nome-aluno
+               display 'Endereço: '
+               accept ws-endereco-aluno
+               display 'Nome do Pai: '
+               accept ws-nome-pai
+               display 'Nome da Mae: '
+               accept ws-nome-mae
+               display 'Telefone dos Pais: '
+               accept ws-tel-pais
+
 
                move ws-alunos to fd-alunos
 
       *> -------------  alterar dados no arquivo de forma sequencial
 
+      *>       alterando os dados
                rewrite fd-alunos
 
                if ws-fs-arqCadastroAlunos = 0 then
@@ -525,8 +578,11 @@
 
       *> -------------
 
-               display 'Deseja Deletar Mais Algum Cadastro? S/N'
+      *>       condição de saída
+               display 'Deseja Alterar Mais Algum Cadastro? S/N'
                accept ws-menu
+               move function upper-case(ws-menu) to ws-menu
+
            end-perform
 
            .
