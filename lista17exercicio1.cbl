@@ -17,11 +17,11 @@
        input-output section.
        file-control.
 
-           select arqCadastroAlunos assign to "arqCadastroAlunos.dat"
+           select arqCadastroAlunos assign to "arqCadastroAlunos.txt"
            organization is indexed
            access mode is dynamic
            lock mode is automatic
-           record key is fd-aluno
+           record key is fd-cod-aluno
            file status is ws-fs-arqCadastroAlunos.
 
        i-o-control.
@@ -35,18 +35,18 @@
        fd arqCadastroAlunos.
 
        01 fd-alunos.
-           05 fd-cod-aluno                         pic  x(03).
+           05 fd-cod-aluno                         pic  9(03).
            05 fd-aluno                             pic  x(25).
            05 fd-endereco                          pic  x(35).
            05 fd-mae                               pic  x(25).
            05 fd-pai                               pic  x(25).
            05 fd-telefone                          pic  x(15).
            05 fd-notas.
-               10 fd-nota1                         pic  9(02)v99 value 0.
-               10 fd-nota2                         pic  9(02)v99 value 0.
-               10 fd-nota3                         pic  9(02)v99 value 0.
-               10 fd-nota4                         pic  9(02)v99 value 0.
-               10 fd-media                         pic  9(02)v99 value 0.
+               10 fd-nota1                         pic  9(02)v99.
+               10 fd-nota2                         pic  9(02)v99.
+               10 fd-nota3                         pic  9(02)v99.
+               10 fd-nota4                         pic  9(02)v99.
+               10 fd-media                         pic  9(02)v99.
 
       *>----variaveis de trabalho
        working-storage section.
@@ -232,8 +232,11 @@
                accept ws-tel-pais
 
       *> -------------  salvar dados no arquivo
+
+               move ws-alunos to fd-alunos
+
       *>       escreve os dados no arquivo
-               write fd-alunos from ws-alunos
+               write fd-alunos
 
       *>       tratamento de erro
                if ws-fs-arqCadastroAlunos <> 0
@@ -288,6 +291,7 @@
                       (ws-nota1 + ws-nota2 + ws-nota3 + ws-nota4) / 4
 
       *> -------------  salvar dados no arquivo
+      *>       preenche o fd-cod-aluno
                move ws-ind to fd-cod-aluno
 
       *>       ler arquivo
@@ -315,8 +319,6 @@
                    end-if
                end-if
 
-               rewrite fd-alunos
-
       *> -------------
 
                display 'Continuar Cadastrando? S/N'
@@ -340,8 +342,9 @@
                accept ws-ind
 
       *> -------------  ler dados no arquivo - indexada
-               move ws-alunos to fd-alunos
+               move ws-ind to fd-cod-aluno
 
+      *>       ler arquivo
                read arqCadastroAlunos
 
                if ws-fs-arqCadastroAlunos <> 0
@@ -360,6 +363,7 @@
 
       *> -------------
 
+               display '  '
                display 'Codigo do Aluno: ' ws-ind
                display 'Nome do Aluno: ' ws-nome-aluno
                display 'Endereço: ' ws-endereco-aluno
@@ -397,20 +401,22 @@
 
       *> -------------  ler dados no arquivo de forma sequencial - next
 
-      *>   ler arquivo de forma sequencial
-           read arqCadastroAlunos next into ws-alunos
+               move ws-ind to fd-cod-aluno
 
-      *>   tratamento de erro
-           if ws-fs-arqCadastroAlunos <> 0 then
-               if ws-fs-arqCadastroAlunos = 10 then
-                   perform consulta-cadastro-seq
-               else
-                   move 6 to ws-msn-erro-ofsset
-                   move ws-fs-arqCadastroAlunos to ws-msn-erro-cod
-                   move 'Erro ao Ler arq. arqCadastroAlunos' to ws-msn-erro-text
-                   perform finaliza-anormal
+      *>       ler arquivo de forma sequencial
+               read arqCadastroAlunos next into ws-alunos
+
+      *>        tratamento de erro
+               if ws-fs-arqCadastroAlunos <> 0 then
+                   if ws-fs-arqCadastroAlunos = 10 then
+                       perform consulta-cadastro-seq
+                   else
+                       move 6 to ws-msn-erro-ofsset
+                       move ws-fs-arqCadastroAlunos to ws-msn-erro-cod
+                       move 'Erro ao Ler arq. arqCadastroAlunos' to ws-msn-erro-text
+                       perform finaliza-anormal
+                   end-if
                end-if
-           end-if
 
       *> -------------
                display 'Codigo do Aluno: ' ws-ind
@@ -447,6 +453,9 @@
                accept ws-ind
 
       *> -------------  ler dados no arquivo de forma sequencial - previous
+
+           move ws-ind to fd-cod-aluno
+
            read arqCadastroAlunos previous
 
            if ws-fs-arqCadastroAlunos <> 0 then
@@ -498,9 +507,9 @@
                display 'Informe o Codigo do Aluno a Ser Excluído: '
                accept ws-ind
 
-               move ws-alunos to fd-alunos
-
       *> -------------  deletar dados no arquivo de forma sequencial
+
+               move ws-ind to fd-cod-aluno
 
       *>       deletar arquivo
                delete arqCadastroAlunos
@@ -559,10 +568,20 @@
                display 'Telefone dos Pais: '
                accept ws-tel-pais
 
+               display 'Altere as Notas'
 
-               move ws-alunos to fd-alunos
+               display 'Nota 1: '
+               accept ws-nota1
+               display 'Nota 2: '
+               accept ws-nota2
+               display 'Nota 3: '
+               accept ws-nota3
+               display 'Nota 4: '
+               accept ws-nota4
 
       *> -------------  alterar dados no arquivo de forma sequencial
+
+               move ws-alunos to fd-alunos
 
       *>       alterando os dados
                rewrite fd-alunos
@@ -590,7 +609,7 @@
            exit.
 
       *>------------------------------------------------------------------------
-      *>  finalização  anormal
+      *>  finalização anormal - erro
       *>------------------------------------------------------------------------
        finaliza-anormal section.
 
