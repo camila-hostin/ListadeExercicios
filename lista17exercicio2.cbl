@@ -28,7 +28,7 @@
       *>declaração de variáveis
        data division.
 
-      *>----ariaveis de arquivos
+      *>----variaveis de arquivos
        file section.
 
        fd arqEstadoCapital.
@@ -229,7 +229,9 @@
       *>------------------------------------------------------------------------
        inicializa section.
 
+      *>   open input abre o arquivo para leitura
            open input arqEstadoCapital.
+      *>   tratamento de erro - file status diferente de 0, erro ao abrir arquivo
            if ws-fs-arqEstadoCapital <> 0 then
                move 1 to ws-msn-erro-offset
                move ws-fs-arqEstadoCapital to ws-msn-erro-cod
@@ -237,11 +239,14 @@
                perform finaliza-anormal
            end-if
 
+      *>   executa variando o índice de temperatura até o índice ser maior que 27
            perform varying ws-ind-est from 1 by 1 until ws-fs-arqEstadoCapital = 10
                                                                  or ws-ind-est > 27
 
+      *>       lê o arquivo de estados
                read arqEstadoCapital into ws-estados(ws-ind-est)
 
+      *>       tratamento de erro - file status diferente de 0 e 10
                if ws-fs-arqEstadoCapital <> 0
                and ws-fs-arqEstadoCapital <> 10  then
                    move 2 to ws-msn-erro-offset
@@ -252,7 +257,9 @@
 
            end-perform
 
+      *>   fechar arquivo
            close arqEstadoCapital.
+      *>   tratamento de erro  - file status diferente de 0
            if ws-fs-arqEstadoCapital <> 0 then
                move 3 to ws-msn-erro-offset
                move ws-fs-arqEstadoCapital to ws-msn-erro-cod
@@ -314,9 +321,12 @@
 
                move space     to   ws-msn
 
-               if ws-nome-jogador <> space then  *> Consistindo a digitação do User, nomes = spaces  são ignorados
+      *>       consistindo a digitação do User, nomes = spaces  são ignorados
+               if ws-nome-jogador <> space then
                    perform descobrir-prox-ind-jog
-                   if ws-ind-jog <= 4 then  *> Consistencia da quantidade de jogadores para evitar estouro de tabela
+
+      *>           consistencia da quantidade de jogadores para evitar estouro de tabela
+                   if ws-ind-jog <= 4 then
 
       *>               salvar jogador na tabela de jogadores
                        move ws-nome-jogador   to  ws-nome-jog(ws-ind-jog)
@@ -339,6 +349,8 @@
            perform until ws-sair = "V"
                       or ws-sair = "v"
 
+      *>       executa variando o índice de jogadores ser maior que 4,
+      *>       o nome ser espaço ou os jogadores resolverem sair
                perform varying  ws-ind-jog  from 1 by 1 until ws-ind-jog > 4
                                                           or  ws-nome-jog(ws-ind-jog) = spaces
                                                           or  ws-sair = "V"
@@ -381,6 +393,8 @@
       *>   descobrir a proxima posição livre dentro da tabela de jogadores
       *>------------------------------------------------------------------------
        descobrir-prox-ind-jog section.
+      *>       executa variando o índice de jogadores ser maior que 4,
+      *>       o nome ser espaço
            perform varying ws-ind-jog from 1 by 1 until ws-ind-jog > 4
                                                      or ws-nome-jog(ws-ind-jog) = space
                continue
@@ -441,8 +455,11 @@
 
                set ws-nao_trocou   to true
 
+      *>       executa variando o índice de jogadores ser maior que 4,
+      *>       o nome ser espaço
                perform until ws-ind-jog = 4
-                       or    ws-nome-jog(ws-ind-jog + 1) = space
+               or ws-nome-jog(ws-ind-jog + 1) = space
+
       *>           critério de ordenação é "pontos do jogador"
                    if ws-pontos(ws-ind-jog) < ws-pontos(ws-ind-jog + 1) then
       *>               faz troca...
