@@ -50,7 +50,6 @@
 
        77 ws-dia                                   pic  9(02).
        77 ws-ind-temp                              pic  9(02).
-
        77 ws-sair                                  pic  x(01).
 
       *>  mensagens de erro
@@ -141,8 +140,8 @@
                display "Dia a ser testado: "
                accept ws-dia
 
-               if  ws-dia >= 1
-               and ws-dia <= 30 then
+               if  ws-dia > 1
+               and ws-dia < 30 then
                    if ws-temp(ws-dia) > ws-media-temp then
                        display "A temperatura do dia " ws-dia " esta acima da media"
                    else
