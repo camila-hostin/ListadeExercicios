@@ -42,11 +42,11 @@
        77 ws-fs-arqTemperatura                     pic  9(02).
 
        01 ws-temperaturas occurs 30.
-          05 ws-temp                               pic s9(02)v99 value 0.
+          05 ws-temp                               pic s9(02)v99.
 
-       77 ws-media-temp                            pic s9(04)v99.
+       77 ws-media-temp                            pic s9(02)v99.
 
-       77 ws-temp-total                            pic s9(04)v99.
+       77 ws-temp-total                            pic s9(03)v99.
 
        77 ws-dia                                   pic  9(02).
        77 ws-ind-temp                              pic  9(02).
@@ -78,6 +78,7 @@
            perform inicializa.
            perform processamento.
            perform finaliza.
+
       *>--------------------------------------------------------------------<*
       *> procedimentos de inicialização
       *>--------------------------------------------------------------------<*
@@ -85,7 +86,7 @@
 
       *>   open input abre o arquivo para leitura
            open input arqTemperatura.
-      *>   tratamento de erro
+      *>   tratamento de erro - file status diferente de 0, erro ao abrir arquivo
            if ws-fs-arqTemperatura <> 0 then
                move 1 to ws-msn-erro-offset
                move ws-fs-arqTemperatura to ws-msn-erro-cod
@@ -93,12 +94,13 @@
                perform finaliza-anormal
            end-if
 
+      *>   executa variando o índice de temperatura até o índice ser maior que 30
            perform varying ws-ind-temp from 1 by 1 until ws-fs-arqTemperatura = 10
                                                                or ws-ind-temp > 30
 
       *>       lê o arquivo de temperatura
                read arqTemperatura into ws-temperaturas(ws-ind-temp)
-      *>       tratamento de erro
+      *>       tratamento de erro - file status diferente de 0 e 10
                if ws-fs-arqTemperatura <> 0
                and ws-fs-arqTemperatura <> 10  then
                    move 2 to ws-msn-erro-offset
@@ -111,7 +113,7 @@
 
       *>   fechar arquivo
            close arqTemperatura.
-      *>   tratamento de erro
+      *>   tratamento de erro  - file status diferente de 0
            if ws-fs-arqTemperatura <> 0 then
                move 3 to ws-msn-erro-offset
                move ws-fs-arqTemperatura to ws-msn-erro-cod
@@ -171,9 +173,10 @@
       *>------------------------------------------------------------------------
        calc-media-temp section.
 
-      *>   inicializando variável
+      *>   inicializando variável de temperatura total
            move 0 to ws-temp-total
 
+      *>   executa variando o índice de temperatura até o índice ser maior que 30
            perform varying ws-ind-temp from 1 by 1 until ws-ind-temp > 30
 
       *>       somando todas as temperaturas
